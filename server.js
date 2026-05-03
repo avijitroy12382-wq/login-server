@@ -3,7 +3,7 @@ const app = express();
 
 app.use(express.json());
 
-// Home route (এইটার জন্যই এখন error আসছিল)
+// Home route
 app.get("/", (req, res) => {
   res.send("Server is running ✅");
 });
