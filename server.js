@@ -3,30 +3,23 @@ const app = express();
 
 app.use(express.json());
 
-let users = [
-    { key: "1234", hwid: "", expire: "2026-12-31" }
-];
-
-app.post("/login", (req, res) => {
-    const { key, hwid } = req.body;
-
-    let user = users.find(u => u.key === key);
-
-    if (!user) {
-        return res.json({ success: false, message: "Invalid Key" });
-    }
-
-    if (new Date(user.expire) < new Date()) {
-        return res.json({ success: false, message: "Key Expired" });
-    }
-
-    if (user.hwid === "") {
-        user.hwid = hwid;
-    } else if (user.hwid !== hwid) {
-        return res.json({ success: false, message: "Device Mismatch" });
-    }
-
-    return res.json({ success: true });
+// Home route (এইটার জন্যই এখন error আসছিল)
+app.get("/", (req, res) => {
+  res.send("Server is running ✅");
 });
 
-app.listen(3000, () => console.log("Server running"));
+// Login API
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  if (username === "admin" && password === "1234") {
+    res.json({ success: true, message: "Login success" });
+  } else {
+    res.json({ success: false, message: "Invalid credentials" });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
+});
