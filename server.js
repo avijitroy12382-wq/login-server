@@ -3,61 +3,47 @@ const app = express();
 
 app.use(express.json());
 
+let keys = [];
+
 // Home
 app.get("/", (req, res) => {
-  res.send("Server is running ✅");
+  res.send("Server running ✅");
 });
 
-// ================= KEY SYSTEM =================
+// Key generate
+app.post("/generate", (req, res) => {
+  const key = Math.random().toString(36).substring(2, 10);
 
-// Example keys (তুমি চাইলে add/change করতে পারো)
-let keys = {
-  "ABC123": {
-    expire: Date.now() + 60 * 60 * 1000, // 1 hour
-    devices: [],
-    maxDevices: 1
-  },
-  "VIP999": {
-    expire: Date.now() + 24 * 60 * 60 * 1000, // 24 hour
+  keys.push({
+    key,
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 1 day
     devices: [],
     maxDevices: 2
-  }
-};
+  });
 
-// Key check API
+  res.json({ key });
+});
+
+// Key check
 app.post("/key", (req, res) => {
   const { key, deviceId } = req.body;
 
-  if (!key || !deviceId) {
-    return res.json({ success: false, message: "Key & Device ID required" });
+  const found = keys.find(k => k.key === key);
+
+  if (!found) return res.json({ success: false });
+
+  if (Date.now() > found.expiresAt) {
+    return res.json({ success: false, message: "Expired" });
   }
 
-  const data = keys[key];
-
-  if (!data) {
-    return res.json({ success: false, message: "Invalid key ❌" });
-  }
-
-  // Expire check
-  if (Date.now() > data.expire) {
-    return res.json({ success: false, message: "Key expired ⏳" });
-  }
-
-  // Device already added?
-  if (!data.devices.includes(deviceId)) {
-    // Limit check
-    if (data.devices.length >= data.maxDevices) {
-      return res.json({ success: false, message: "Device limit reached ❌" });
+  if (!found.devices.includes(deviceId)) {
+    if (found.devices.length >= found.maxDevices) {
+      return res.json({ success: false, message: "Limit reached" });
     }
-    data.devices.push(deviceId);
+    found.devices.push(deviceId);
   }
 
-  res.json({ success: true, message: "Access granted ✅" });
+  res.json({ success: true });
 });
 
-// ==============================================
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
-});
+app.listen(3000);
